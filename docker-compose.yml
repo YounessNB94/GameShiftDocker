@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:10.5
+    container_name: gameshift-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: GameShift
+      MYSQL_USER: gameshift_user
+      MYSQL_PASSWORD: gameshift_pass
+    volumes:
+      # Volume de données (persistance)
+      - gameshift_db:/var/lib/mysql
+      # Import auto du dump au premier démarrage
+      - ./Base de donnée/GameShift.sql:/docker-entrypoint-initdb.d/1_gameshift.sql:ro
+    networks:
+      - gameshift-net
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  front:
+    build:
+      context: ./Front_Office
+      dockerfile: Dockerfile
+    image: younessnb94/gameshift-front:latest
+    container_name: gameshift-front
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_NAME: GameShift
+      DB_USER: gameshift_user
+      DB_PASSWORD: gameshift_pass
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    networks:
+      - gameshift-net
+
+  back:
+    build:
+      context: ./Back_Office
+      dockerfile: Dockerfile
+    image: younessnb94/gameshift-back:latest
+    container_name: gameshift-back
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_NAME: GameShift
+      DB_USER: gameshift_user
+      DB_PASSWORD: gameshift_pass
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    networks:
+      - gameshift-net
+
+volumes:
+  gameshift_db:
+
+networks:
+  gameshift-net:
+    driver: bridge
