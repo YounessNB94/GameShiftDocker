@@ -81,3 +81,22 @@ La base de données est configurée avec :
 - **Accès** : Les applications sont accessibles sur les ports 8080 (front) et 8081 (back).
 
 ---
+
+## 6) Test de la communication entre conteneurs
+
+Pour vérifier que le front et le back communiquent bien avec la base de données via le réseau Docker :
+
+1. Ouvre un shell dans le conteneur front ou back :
+   ```bash
+   docker exec -it gameshift-front bash
+   ```
+2. Installe le client MariaDB (si besoin) et teste la connexion :
+   ```bash
+   apt-get update && apt-get install -y mariadb-client-compat
+   mysql -h db -u root --skip-ssl -p
+   ```
+   (Laisse le mot de passe vide si tu utilises `MYSQL_ALLOW_EMPTY_PASSWORD=yes`)
+
+Si la connexion réussit, la communication réseau entre les conteneurs fonctionne correctement.
+
+---
