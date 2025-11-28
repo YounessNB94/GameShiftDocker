@@ -1,7 +1,7 @@
 <?php
 // Connexion MySQLi pour le Back Office
 
-$host     = getenv('DB_HOST') ?: 'localhost';
+$host     = getenv('DB_HOST') ?: '127.0.0.1';
 $dbname   = getenv('DB_NAME') ?: 'GameShift';
 $username = getenv('DB_USER') ?: 'root';
 $password = getenv('DB_PASSWORD') ?: '';

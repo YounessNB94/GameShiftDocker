@@ -1,66 +1,83 @@
-# GameShift
-# GameShift — Lancement en local (XAMPP)
+# GameShiftDocker — Conteneurisation Docker (Full Stack)
 
-Ce projet est une application web PHP avec :
-- un **Front Office** (`Front_Office/`)
-- un **Back Office** (`Back_Office/`)
-- une base de données MySQL fournie dans `Base de donnée/GameShift.sql`
+Projet : conteneurisation d’une application full stack (Front + Back + DB) avec **Docker** et **Docker Compose**.
 
 ---
 
-## Prérequis
+## 1) Liens
 
-- **XAMPP** (Apache + MySQL + phpMyAdmin)
-- Un navigateur (Chrome / Firefox / Edge)
-- Windows (chemins donnés pour Windows, adaptable sur Linux/Mac)
+- **Repo Git** : https://github.com/YounessNB94/GameShiftDocker
+- **Docker Hub** :
+  - Front : https://hub.docker.com/r/younessnb94/gameshift-front
+  - Back : https://hub.docker.com/r/younessnb94/gameshift-back
 
 ---
 
-## Installation du projet
+## 2) Architecture Docker
 
-1. Dézipper le projet.
-2. Copier le dossier du projet dans le dossier `htdocs` de XAMPP :
+- **db** : Base de données MySQL, persistance via le volume `gameshift_db` monté sur `/var/lib/mysql`.
+- **front** : Front Office PHP/Apache, exposé sur le port `8080`.
+- **back** : Back Office PHP/Apache, exposé sur le port `8081`.
 
-   Exemple :
-C:\xampp\htdocs\GameShift\
+Tous les services sont connectés au réseau Docker dédié `gameshift_network` pour une communication sécurisée. Les variables d'environnement permettent la connexion à la base via le DNS Docker `db`.
 
-## Démarrer les services XAMPP
+---
 
-Ouvrir **XAMPP Control Panel** puis cliquer sur :
-- **Start** sur `Apache`
-- **Start** sur `MySQL`
+## 3) Instructions pour construire et démarrer
 
-Dans le navigateur mettez cette URL:
-- `http://localhost/gameShift/Front_Office/ ` Pour accéder au Front-office
+Depuis la racine du projet (là où se trouve `docker-compose.yml`) :
 
-## Important : URL = nom du dossier dans `htdocs` (y compris pour le lien de vérification)
+```bash
+docker compose up --build -d
+```
 
-L’URL d’accès dépend directement du nom du dossier présent dans :
+- Accès Front Office : http://localhost:8080
+- Accès Back Office : http://localhost:8081
 
-`C:\xampp\htdocs\`
+Pour consulter les logs :
 
-Exemple : si le projet est dans :
-`C:\xampp\htdocs\GameShift\`
+```bash
+docker compose logs --tail=50 db
+docker compose logs --tail=50 front
+docker compose logs --tail=50 back
+```
 
-Alors les URLs sont :
-- Front : `http://localhost/GameShift/Front_Office/`
-- Back : `http://localhost/GameShift/Back_Office/`
+Pour arrêter et supprimer les conteneurs (sans supprimer la DB persistée) :
 
-⚠️ Si tu tapes un autre chemin (ex: `http://localhost/jeushift/...`) ça ne marchera **pas**, sauf si :
-- un dossier `C:\xampp\htdocs\jeushift\` existe, **ou**
-- tu as configuré un **Alias / VirtualHost** Apache qui pointe `jeushift` vers le dossier du projet.
+```bash
+docker compose down
+```
 
-### Lien de vérification email (register.php)
-Dans `Front_Office/register.php`, le lien envoyé par email contient une URL du type :
-`http://localhost/GameShift/Front_Office/verifier_email.php?email=...&token=...`
+Pour réinitialiser complètement la base (supprimer le volume) :
 
-➡️ La partie **`GameShift`** doit être **exactement le nom du dossier** du projet dans `htdocs`.
-Exemples :
-- Dossier : `C:\xampp\htdocs\GameShift\` → URL avec `/GameShift/`
-- Dossier : `C:\xampp\htdocs\GameShift-main\` → URL avec `/GameShift-main/`
+```bash
+docker compose down -v
+```
 
-Sinon, le lien mènera à une erreur **404 Not Found**.
+---
 
-### Majuscules / minuscules (casse)
-- Sur **Windows (XAMPP)** : `GameShift` et `gameshift` fonctionnent généralement pareil (pas sensible à la casse).
-- Sur **Linux (serveur)** : la casse compte, donc il faut utiliser exactement le même nom (`GameShift` ≠ `gameshift`).
+## 4) Variables d’environnement (connexion DB)
+
+Les services front et back utilisent :
+
+- `DB_HOST=db`
+- `DB_NAME=GameShift`
+- `DB_USER=root`
+- `DB_PASSWORD=` (mot de passe vide par défaut)
+
+La base de données est configurée avec :
+
+- `MYSQL_DATABASE=GameShift`
+- `MYSQL_ALLOW_EMPTY_PASSWORD=yes`
+- Volume : `gameshift_db:/var/lib/mysql`
+
+---
+
+## 5) Explication
+
+**Import SQL** : Le fichier `Database/GameShift.sql` a été créé manuellement pour alimenter et modifier la base MySQL. Il est importé automatiquement au premier lancement si la base est vide.
+- **Persistance** : Les données sont conservées grâce au volume Docker `gameshift_db`.
+- **Réseau** : Tous les services sont sur le réseau `gameshift_network` pour garantir la communication et l'isolation.
+- **Accès** : Les applications sont accessibles sur les ports 8080 (front) et 8081 (back).
+
+---
